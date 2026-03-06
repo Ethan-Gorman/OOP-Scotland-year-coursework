@@ -1,9 +1,12 @@
 package uk.ac.bris.cs.scotlandyard.model;
 
 import com.google.common.collect.ImmutableList;
-
+import com.google.common.collect.ImmutableSet;
 import jakarta.annotation.Nonnull;
-
+import uk.ac.bris.cs.scotlandyard.model.Move.*;
+import uk.ac.bris.cs.scotlandyard.model.Piece.*;
+import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
+import java.util.*;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
@@ -13,6 +16,7 @@ import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
  */
 public final class MyGameStateFactory implements Factory<GameState> {
 
+
 	@Nonnull @Override public GameState build(
 			GameSetup setup,
 			Player mrX,
@@ -20,6 +24,45 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		// TODO
 		throw new RuntimeException("Implement me!");
 
+	}
+
+	private final class MyGameState implements GameState {
+		private GameSetup setup;
+		private ImmutableSet<Piece> remaining;
+		private ImmutableList<LogEntry> log;
+		private Player mrX;
+		private List<Player> detectives;
+		private ImmutableSet<Move> moves;
+		private ImmutableSet<Piece> winner;
+
+		@Override
+		public Optional<Integer> getDetectiveLocation(Detective detective) {
+			return Optional.empty();
+		}
+
+		@Override
+		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
+			return Optional.empty();
+		}
+
+		@Override
+		public ImmutableList<LogEntry> getMrXTravelLog() {
+			return null;
+		}
+
+		@Override
+		public ImmutableSet<Piece> getWinner() {
+			return winner;
+		}
+
+		@Override
+		public ImmutableSet<Move> getAvailableMoves() {
+			return null;
+		}
+
+		@Override public GameSetup getSetup() { return this.setup;}
+		@Override  public ImmutableSet<Piece> getPlayers() { return null; }
+		@Override public GameState advance(Move move) {  return null;  }
 	}
 
 }
