@@ -7,6 +7,8 @@ import uk.ac.bris.cs.scotlandyard.model.Move.*;
 import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import java.util.*;
+import java.util.stream.Stream;
+
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
 
@@ -35,8 +37,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
 
+		@Override public GameSetup getSetup() {
+			return this.setup;
+		}
+
+		@Override  public ImmutableSet<Piece> getPlayers() {
+			return Stream.concat(Stream.of(mrX.piece()), detectives.stream().map(Player::piece)).collect(ImmutableSet.toImmutableSet());
+		}
 		@Override
 		public Optional<Integer> getDetectiveLocation(Detective detective) {
+			for(Player p : detectives) {
+				if(p.piece().equals(detective)) {
+					return Optional.of(p.location());
+				}
+			}
 			return Optional.empty();
 		}
 
@@ -60,8 +74,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return null;
 		}
 
-		@Override public GameSetup getSetup() { return this.setup;}
-		@Override  public ImmutableSet<Piece> getPlayers() { return null; }
 		@Override public GameState advance(Move move) {  return null;  }
 	}
 
