@@ -24,8 +24,18 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			Player mrX,
 			ImmutableList<Player> detectives) {
 
-		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
+		// validation tests
+		// throws if Mr X or detectives are null
+		Objects.requireNonNull(mrX);
+		Objects.requireNonNull(detectives);
+		// throws if duplicate detectives
+		Hashtable ht = new Hashtable();
+		for (Player player : detectives) {
+			if (ht.containsKey(player)) throw new IllegalArgumentException("Duplicate detectives");
+			ht.put(player, player);
+		}
 
+		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
 	}
 
 	private final class MyGameState implements GameState {
@@ -68,7 +78,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-			return Optional.empty();
+			//for
+            return Optional.empty();
 		}
 
 		@Override
