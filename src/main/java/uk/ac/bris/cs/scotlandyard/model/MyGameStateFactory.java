@@ -44,14 +44,19 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if (ht.containsKey(player)) throw new IllegalArgumentException("Duplicate detectives");
 			ht.put(player, player);
 		}
-		{
-		}
 
 		// throws if detective locations overlap
 		HashSet<Integer> OccupiedLocations = new HashSet<>();
 		for (Player player : detectives) {
 			if (!OccupiedLocations.add(player.location())) throw new IllegalArgumentException("Detective location overlap");
 		}
+
+		// throws if detectives have x2 ticket or secret ticket
+		for (Player player : detectives) {
+			if (player.has(Ticket.DOUBLE) || player.has(Ticket.SECRET)) throw new IllegalArgumentException("Illegal detective ticket");
+		}
+
+		if (setup.moves.isEmpty()) throw new IllegalArgumentException("No moves");
 
 		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
 	}
@@ -84,6 +89,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override  public ImmutableSet<Piece> getPlayers() {
 			return Stream.concat(Stream.of(mrX.piece()), detectives.stream().map(Player::piece)).collect(ImmutableSet.toImmutableSet());
 		}
+
 		@Override
 		public Optional<Integer> getDetectiveLocation(Detective detective) {
 			for(Player p : detectives) {
