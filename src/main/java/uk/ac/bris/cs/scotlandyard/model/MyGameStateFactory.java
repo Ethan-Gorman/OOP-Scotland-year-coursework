@@ -8,6 +8,8 @@ import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 import java.util.*;
 import java.util.stream.Stream;
+import java.util.HashSet;
+
 
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.Factory;
@@ -33,20 +35,23 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		if (detectives.stream().anyMatch(p -> p.piece().equals(mrX.piece()))) {
 			throw new IllegalArgumentException("More than 1 mrX");
 		}
-		//No mrX
+		//No swapped mr X
 		if (mrX.isDetective()) throw new IllegalArgumentException("No mrX");
 
-		// throws if duplicate detectives
+		// throws if duplicate detectives or equal detective location
 		Hashtable ht = new Hashtable();
 		for (Player player : detectives) {
 			if (ht.containsKey(player)) throw new IllegalArgumentException("Duplicate detectives");
 			ht.put(player, player);
 		}
 		{
-
-
 		}
 
+		// throws if detective locations overlap
+		HashSet<Integer> OccupiedLocations = new HashSet<>();
+		for (Player player : detectives) {
+			if (!OccupiedLocations.add(player.location())) throw new IllegalArgumentException("Detective location overlap");
+		}
 
 		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
 	}
@@ -68,8 +73,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.log = log;
 			this.mrX = mrX;
 			this.detectives = detectives;
-
-
 
 		}
 
