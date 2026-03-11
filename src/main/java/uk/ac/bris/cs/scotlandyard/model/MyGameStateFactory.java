@@ -25,15 +25,28 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			ImmutableList<Player> detectives) {
 
 		// validation tests
+
 		// throws if Mr X or detectives are null
 		Objects.requireNonNull(mrX);
 		Objects.requireNonNull(detectives);
+		//check if detectives contain a mrX piece
+		if (detectives.stream().anyMatch(p -> p.piece().equals(mrX.piece()))) {
+			throw new IllegalArgumentException("More than 1 mrX");
+		}
+		//No mrX
+		if (mrX.isDetective()) throw new IllegalArgumentException("No mrX");
+
 		// throws if duplicate detectives
 		Hashtable ht = new Hashtable();
 		for (Player player : detectives) {
 			if (ht.containsKey(player)) throw new IllegalArgumentException("Duplicate detectives");
 			ht.put(player, player);
 		}
+		{
+
+
+		}
+
 
 		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
 	}
@@ -55,6 +68,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.log = log;
 			this.mrX = mrX;
 			this.detectives = detectives;
+
+
 
 		}
 
