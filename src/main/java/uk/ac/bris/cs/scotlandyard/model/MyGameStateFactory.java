@@ -49,6 +49,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		HashSet<Integer> OccupiedLocations = new HashSet<>();
 		for (Player player : detectives) {
 			if (!OccupiedLocations.add(player.location())) throw new IllegalArgumentException("Detective location overlap");
+
 		}
 
 		// throws if detectives have x2 ticket or secret ticket
@@ -102,7 +103,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-			//for
+
             return Optional.empty();
 		}
 
