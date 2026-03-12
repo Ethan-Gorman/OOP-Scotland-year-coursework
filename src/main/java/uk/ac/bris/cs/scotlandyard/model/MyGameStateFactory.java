@@ -49,7 +49,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		HashSet<Integer> OccupiedLocations = new HashSet<>();
 		for (Player player : detectives) {
 			if (!OccupiedLocations.add(player.location())) throw new IllegalArgumentException("Detective location overlap");
-
 		}
 
 		// throws if detectives have x2 ticket or secret ticket
@@ -58,6 +57,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		if (setup.moves.isEmpty()) throw new IllegalArgumentException("No moves");
+		if (setup.graph.nodes().isEmpty()) throw new IllegalArgumentException("No graph");
 
 		return new MyGameState(setup, ImmutableSet.of(MrX.MRX), ImmutableList.of(), mrX, detectives);
 	}
@@ -67,13 +67,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Piece> remaining;
 		private ImmutableList<LogEntry> log;
 		private Player mrX;
-		private List<Player> detectives;
+		private ImmutableList<Player> detectives;
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
 
 
 
-		private MyGameState(final GameSetup setup,final ImmutableSet<Piece> remaining, final ImmutableList<LogEntry> log, final Player mrX, final List<Player> detectives){
+		private MyGameState(final GameSetup setup,final ImmutableSet<Piece> remaining, final ImmutableList<LogEntry> log, final Player mrX, final ImmutableList<Player> detectives){
 			this.setup = setup;
 			this.remaining = remaining;
 			this.log = log;
@@ -104,6 +104,18 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
 
+			if (mrX.piece().equals(piece)) {
+				return Optional.of(ticket ->
+						mrX.tickets().getOrDefault(ticket, 0));
+			}
+
+			for (Player p : detectives) {
+				if (p.piece().equals(piece)) {
+					return Optional.of(ticket ->
+							p.tickets().getOrDefault(ticket, 0));
+				}
+			}
+
             return Optional.empty();
 		}
 
@@ -112,9 +124,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return null;
 		}
 
+		// temporarily just returns empty set needs to return list of winning pieces when conditions for a win is met
 		@Override
 		public ImmutableSet<Piece> getWinner() {
-			return winner;
+			return ImmutableSet.of();
 		}
 
 		@Override
