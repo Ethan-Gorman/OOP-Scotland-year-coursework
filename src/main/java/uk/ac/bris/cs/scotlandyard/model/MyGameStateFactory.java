@@ -80,6 +80,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 
+
 		}
 
 
@@ -130,10 +131,31 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return ImmutableSet.of();
 		}
 
+		// helper functions for getavailablemoves
+		private static Set<SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
+			HashSet<SingleMove> singleMoves = new HashSet<>();
+			//check detectives cannot move onto another detective
+			for (int destination : setup.graph.adjacentNodes(source)) {
+				if (detectives.stream().anyMatch(p -> p.location() == destination)) continue;
+
+				//check each transport option on node and check if player has the corresponding ticket
+				for (Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
+					if (player.has(t.requiredTicket())) {
+						singleMoves.add(new SingleMove(player.piece(), source, t.requiredTicket(), destination));
+					}
+
+
+
+				}
+
+			}return singleMoves;
+		}
+
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
-			return null;
+			return ImmutableSet.copyOf(makeSingleMoves(setup,detectives,mrX, mrX.location()));
 		}
+
 
 		@Override public GameState advance(Move move) {  return null;  }
 	}
