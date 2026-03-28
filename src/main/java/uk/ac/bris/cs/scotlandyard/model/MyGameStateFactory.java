@@ -143,9 +143,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					if (player.has(t.requiredTicket())) {
 						singleMoves.add(new SingleMove(player.piece(), source, t.requiredTicket(), destination));
 					}
-
-
-
 				}
 
 			}return singleMoves;
@@ -155,8 +152,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public ImmutableSet<Move> getAvailableMoves() {
 			return ImmutableSet.copyOf(makeSingleMoves(setup,detectives,mrX, mrX.location()));
 		}
-
-
 		@Override public GameState advance(Move move) {  return null;  }
 	}
 
