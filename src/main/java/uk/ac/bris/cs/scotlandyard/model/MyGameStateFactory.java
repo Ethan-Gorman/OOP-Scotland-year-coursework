@@ -79,6 +79,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.log = log;
 			this.mrX = mrX;
 			this.detectives = detectives;
+			this.moves = ImmutableSet.copyOf(getAvailableMoves());
+
 
 
 		}
@@ -122,7 +124,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override
 		public ImmutableList<LogEntry> getMrXTravelLog() {
-			return null;
+			return this.log;
 		}
 
 		// temporarily just returns empty set needs to return list of winning pieces when conditions for a win is met
@@ -137,7 +139,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//check detectives cannot move onto another detective
 			for (int destination : setup.graph.adjacentNodes(source)) {
 				if (detectives.stream().anyMatch(p -> p.location() == destination)) continue;
-
 				//check each transport option on node and check if player has the corresponding ticket
 				for (Transport t : Objects.requireNonNull(setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()))) {
 					if (player.has(t.requiredTicket()) || player.has(Ticket.SECRET)) {
@@ -148,6 +149,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 
 			}return singleMoves;
+
+
 		}
 
 		// gives all possible double moves
@@ -197,7 +200,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 
-		@Override public GameState advance(Move move) {  return this;  }
+		@Override public GameState advance(Move move) {
+			if (!this.moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
+			return this;
+		}
 	}
 
 }
+
+
+
+
+
+
+
