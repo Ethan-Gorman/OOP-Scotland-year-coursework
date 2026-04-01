@@ -202,7 +202,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override public GameState advance(Move move) {
 			if (!this.moves.contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
-			return this;
+
+			return move.accept(new Move.Visitor<GameState>(){
+				public GameState visit(SingleMove m){
+					return null;
+				}
+				public GameState visit(DoubleMove m){
+					return null;
+				}
+			});
 		}
 	}
 
