@@ -191,7 +191,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			//return ImmutableSet.copyOf(makeSingleMoves(setup,detectives,mrX, mrX.location()));
 
 			Set<Move> moves = new HashSet<>();
-
 			for (Player player : detectives) {
 				if (remaining.contains(player.piece())) {
 					moves.addAll(makeSingleMoves(setup, detectives, player, player.location()));
@@ -223,7 +222,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override public GameState advance(Move move) {
 			//check if the players move is valid
-			if (!this.getAvailableMoves().contains(move)) throw new IllegalArgumentException("Illegal move: " + move);
 
 
 
