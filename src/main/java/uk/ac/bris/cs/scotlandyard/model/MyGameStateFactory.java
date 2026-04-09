@@ -223,7 +223,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if (getAvailableMoves().stream().noneMatch(m -> m.equals(move))) {
 				throw new IllegalArgumentException("Illegal move: " + move);
 			}
-
+			System.out.println("test");
 				//visitor pattern
 
 			return move.accept(new Move.Visitor<>(){
