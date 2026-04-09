@@ -164,7 +164,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		// omits moves which land on detective or have detective on intermediate location
 		private Set<DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source) {
 
-			if (player.has(Ticket.DOUBLE) && setup.moves.size() > 1) {
+			if (player.has(Ticket.DOUBLE) && log.size() + 1 < setup.moves.size()) {
 				HashSet<DoubleMove> doubleMoves = new HashSet<>();
 				HashSet<SingleMove> FirstMove = makeSingleMoves(setup, detectives, player, source);
 
@@ -188,8 +188,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
 
-			//return ImmutableSet.copyOf(makeSingleMoves(setup,detectives,mrX, mrX.location()));
-
 			Set<Move> moves = new HashSet<>();
 			for (Player player : detectives) {
 				if (remaining.contains(player.piece())) {
@@ -197,7 +195,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 			}
 
-			if (remaining.contains(mrX.piece()) && remaining.size() == 1) {
+			if (remaining.contains(mrX.piece())) {
 				moves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
 				moves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
 			}
@@ -214,7 +212,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		private ImmutableList<LogEntry> determineLogEntryTypeForDouble(Ticket t1, Ticket t2, Integer location1, Integer location2) {
 			LogEntry firstMove = (setup.moves.get(log.size())) ? (LogEntry.reveal(t1, location1)) : (LogEntry.hidden(t1));
-			LogEntry secondMove = (setup.moves.get(log.size())) ? (LogEntry.reveal(t2, location2)) : (LogEntry.hidden(t2));
+			LogEntry secondMove = (setup.moves.get(log.size()+1)) ? (LogEntry.reveal(t2, location2)) : (LogEntry.hidden(t2));
 			return ImmutableList.of(firstMove,secondMove);
 
 		}
@@ -222,26 +220,33 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override public GameState advance(Move move) {
 			//check if the players move is valid
-
-
+			if (getAvailableMoves().stream().noneMatch(m -> m.equals(move))) {
+				throw new IllegalArgumentException("Illegal move: " + move);
+			}
 
 				//visitor pattern
 
 			return move.accept(new Move.Visitor<>(){
 				public GameState visit(SingleMove m){
 					if (m.commencedBy().isMrX()){
+
+						ImmutableList<LogEntry> newLog = Stream.concat(log.stream(), determineLogEntryType(m.ticket,m.destination).stream()).collect(ImmutableList.toImmutableList());
 						return new MyGameState(
 							setup,
 							detectives.stream().map(Player::piece).collect(ImmutableSet.toImmutableSet()),
-							determineLogEntryType(m.ticket, m.destination),
+							newLog,
 							mrX.at(m.destination).use(m.ticket),
 							detectives);
 					}
 
 					else {
+						ImmutableSet<Piece> newRemaining = remaining.stream()
+										.filter(p -> !p.equals(m.commencedBy()))
+										.collect(ImmutableSet.toImmutableSet());
+						if (newRemaining.isEmpty()) newRemaining = ImmutableSet.of(mrX.piece());
 						return new MyGameState(
 								setup,
-								detectives.stream().map(Player::piece).collect(ImmutableSet.toImmutableSet()),
+								newRemaining,
 								log,
 								mrX.give(m.ticket),
 								detectives.stream().map(p -> p.piece().equals(m.commencedBy()) ? p.at(m.destination).use(m.ticket) : p).collect(ImmutableList.toImmutableList()));
@@ -250,11 +255,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 
 				public GameState visit(DoubleMove m){
+
+					ImmutableList<LogEntry> newLog = Stream.concat(log.stream(), determineLogEntryTypeForDouble(m.ticket1,m.ticket2,m.destination1,m.destination2).stream())
+							.collect(ImmutableList.toImmutableList());
+
 					return new MyGameState(
 							setup,
 							detectives.stream().map(Player::piece).collect(ImmutableSet.toImmutableSet()),
-							determineLogEntryTypeForDouble(m.ticket1,m.ticket2,m.destination1, m.destination2),
-							mrX.at(m.destination2).use(m.ticket2),
+							newLog,
+							mrX.at(m.destination1).use(m.ticket1).at(m.destination2).use(m.ticket2).use(Ticket.DOUBLE),
 							detectives);
 
 
