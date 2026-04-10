@@ -30,16 +30,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		// validation tests
 
-		// throws if Mr X or detectives are null
-		Objects.requireNonNull(mrX);
-		Objects.requireNonNull(detectives);
 		//check if detectives contain a mrX piece
-		if (detectives.stream().anyMatch(p -> p.piece().equals(mrX.piece()))) {
-			throw new IllegalArgumentException("More than 1 mrX");
-		}
+		if (detectives.stream().anyMatch(p -> p.piece().equals(mrX.piece()))) throw new IllegalArgumentException("More than 1 mrX");
 		//No swapped mr X
 		if (mrX.isDetective()) throw new IllegalArgumentException("No mrX");
-
 		// throws if duplicate detectives or equal detective location
 		Hashtable ht = new Hashtable();
 		for (Player player : detectives) {
@@ -80,8 +74,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.setup = setup;
 			this.remaining = remaining;
 			this.log = log;
-			this.mrX = mrX;
-			this.detectives = detectives;
+			this.mrX = Objects.requireNonNull(mrX);
+			this.detectives = Objects.requireNonNull(detectives);
 			this.moves = ImmutableSet.copyOf(getAvailableMoves());
 
 
@@ -100,29 +94,16 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 		@Override
 		public Optional<Integer> getDetectiveLocation(Detective detective) {
-			for (Player p : detectives) {
-				if (p.piece().equals(detective)) {
-					return Optional.of(p.location());
-				}
-			}
-			return Optional.empty();
+			return detectives.stream().filter(p -> p.piece().equals(detective)).map(Player::location).findFirst();
 		}
 
 		@Override
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-
-			if (mrX.piece().equals(piece)) {
-				return Optional.of(ticket ->
-						mrX.tickets().getOrDefault(ticket, 0));
-			}
+			if (mrX.piece().equals(piece)) return Optional.of(ticket -> mrX.tickets().getOrDefault(ticket, 0));
 
 			for (Player p : detectives) {
-				if (p.piece().equals(piece)) {
-					return Optional.of(ticket ->
-							p.tickets().getOrDefault(ticket, 0));
-				}
+				if (p.piece().equals(piece)) return Optional.of(ticket -> p.tickets().getOrDefault(ticket, 0));
 			}
-
 			return Optional.empty();
 		}
 
@@ -131,9 +112,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return this.log;
 		}
 
-		// temporarily just returns empty set needs to return list of winning pieces when conditions for a win is met
+		private boolean mrXlose() {
+			if (makeSingleMoves(setup, detectives, mrX, mrX.location()).isEmpty() && makeDoubleMoves(setup, detectives, mrX, mrX.location()).isEmpty() && remaining.contains(mrX.piece())) return true;
+			if (detectives.stream().anyMatch(d -> d.location() == mrX.location())) return true;
+			return false;
+		}
+
+		private boolean detectivesLose() {
+			if (log.size() == setup.moves.size() && remaining.contains(mrX.piece())) return true;
+			if (detectives.stream().allMatch(p -> p.tickets().values().stream().allMatch(count -> count == 0))) return true;
+			return false;
+		}
+
 		@Override
 		public ImmutableSet<Piece> getWinner() {
+			if (mrXlose()) return detectives.stream().map(Player::piece).collect(ImmutableSet.toImmutableSet());
+			if (detectivesLose()) return ImmutableSet.of(mrX.piece());
 			return ImmutableSet.of();
 		}
 
@@ -188,6 +182,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
 
+			if (!getWinner().isEmpty()) return ImmutableSet.of();
+
 			Set<Move> moves = new HashSet<>();
 			for (Player player : detectives) {
 				if (remaining.contains(player.piece())) {
@@ -199,6 +195,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				moves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
 				moves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
 			}
+
 
 			return ImmutableSet.copyOf(moves);
 		}
@@ -223,8 +220,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if (getAvailableMoves().stream().noneMatch(m -> m.equals(move))) {
 				throw new IllegalArgumentException("Illegal move: " + move);
 			}
-			System.out.println("test");
-				//visitor pattern
+
+			//visitor pattern
 
 			return move.accept(new Move.Visitor<>(){
 				public GameState visit(SingleMove m){
@@ -263,7 +260,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 							setup,
 							detectives.stream().map(Player::piece).collect(ImmutableSet.toImmutableSet()),
 							newLog,
-							mrX.at(m.destination1).use(m.ticket1).at(m.destination2).use(m.ticket2).use(Ticket.DOUBLE),
+							mrX.at(m.destination2).use(m.ticket1).use(m.ticket2).use(Ticket.DOUBLE),
 							detectives);
 
 
@@ -274,7 +271,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 
 				});
 		}
-	}
+    }
 
 }
 
