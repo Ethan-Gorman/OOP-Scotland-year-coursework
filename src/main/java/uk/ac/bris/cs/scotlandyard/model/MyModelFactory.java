@@ -3,6 +3,7 @@ package uk.ac.bris.cs.scotlandyard.model;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 import com.google.common.collect.ImmutableSet;
@@ -43,14 +44,13 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void registerObserver(Observer observer) {
-			if (observer == null) throw new NullPointerException("Observer does not exist");
 			if (observers.contains(observer)) throw new IllegalArgumentException("Already an Observer");
-			observers.add(observer);
+			observers.add(Objects.requireNonNull(observer));
 		}
 
 		@Override
 		public void unregisterObserver(Observer observer) {
-			if (observer == null) throw new NullPointerException("Observer does not exist");
+			Objects.requireNonNull(observer);
 			if (!observers.contains(observer)) throw new IllegalArgumentException("Observer not registered");
 			observers.remove(observer);
 
@@ -63,14 +63,15 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(Move move) {
+			//moves game state ahead one move
 			currentState = currentState.advance(move);
-			Observer.Event event = (currentState.getWinner().isEmpty())? Observer.Event.MOVE_MADE:  Observer.Event.GAME_OVER;
+			//decides the cause of the event
+			Observer.Event event = (currentState.getWinner().isEmpty()) ? Observer.Event.MOVE_MADE :  Observer.Event.GAME_OVER;
 
-
-			for(Observer observer: ImmutableSet.copyOf(observers)){
+			//iterates over observers
+			//updates them with why state changed and gives current state
+			for(Observer observer: observers){
 				observer.onModelChanged(getCurrentBoard(),event);
-				//System.out.println( event);
-				//System.out.println(currentState.getWinner());
 			}
 		}
 	}
