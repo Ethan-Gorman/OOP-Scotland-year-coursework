@@ -10,7 +10,7 @@ import jakarta.annotation.Nonnull;
 import io.atlassian.fugue.Pair;
 import uk.ac.bris.cs.scotlandyard.model.*;
 
-public class myAi implements Ai {
+public class MyAi implements Ai {
 
 	@Nonnull @Override public String name() { return "Destroyer of Worlds"; }
 
@@ -22,29 +22,28 @@ public class myAi implements Ai {
 	public void onTerminate() {
 	}
 
+	//simple djikstra algorithm inspiration from princeton version in lectures
 	Map<Integer,Integer> djikstra(Board board, int src) {
 		ImmutableValueGraph<Integer, ImmutableSet<ScotlandYard.Transport>> g = board.getSetup().graph;
 		int numOfNodes = g.nodes().size() + 1;
 
-		//priority queue storing next node to process
+		//priority queue storing next node
 		PriorityQueue<Integer> pq = new PriorityQueue<>((a, b) -> a - b);
 
-		//Distance array that stores shortest distance from source
+		//hashmap that stores shortest distance from source
 		Map<Integer, Integer> distanceFromSource = new HashMap<>();
 
 		for (int node : g.nodes()) {
 			distanceFromSource.put(node, 999);
 		}
 
-		//Distance from source to itself is 0
 		distanceFromSource.put(src, 0);
 		pq.add(src);
 
-		//Process the queue until all vertices are processed
+		//go through queue until all vertices are processed
 		while (!pq.isEmpty()) {
 			int currentNode = pq.poll();
 
-			// Explore all adjacent vertices
 			for (int adjacentNode : g.adjacentNodes(currentNode)) {
 				//all edges are of weight 1 at the moment
 				int newDistance = distanceFromSource.get(currentNode) + 1;
@@ -60,30 +59,62 @@ public class myAi implements Ai {
 
 		return distanceFromSource;
 	}
-}
 
-	@Nonnull @Override public Move pickMove(
-			@Nonnull Board board,
-			Pair<Long, TimeUnit> timeoutPair) {
+@Nonnull @Override public Move pickMove(
+		@Nonnull Board board,
+		Pair<Long, TimeUnit> timeoutPair) {
 
-		Set<Move> possibleMoves = board.getAvailableMoves().stream()
-				.filter(m -> m.commencedBy().isMrX())
-				.collect(Collectors.toSet());
+	Set<Move> possibleMoves = board.getAvailableMoves().stream()
+			.filter(m -> m.commencedBy().isMrX())
+			.collect(Collectors.toSet());
 
-		Map<Integer, Map<Integer, Integer>> distanceToDetective = new HashMap<>();
+	Map<Piece, Map<Integer, Integer>> distanceToDetective = new HashMap<>();
+	Set<Piece> detectives = board.getPlayers().stream().filter(p -> p.isDetective()).collect(Collectors.toSet());
 
 
-		for (Piece piece : board.getPlayers()) {
-			if (piece.isDetective()) {
-				Piece.Detective detective = (Piece.Detective) piece;
-				Optional<Integer> location = board.getDetectiveLocation(detective);
+	//goes through every detective and finds shortest distance to every node from current node
+	for (Piece piece : detectives) {
+			Piece.Detective detective = (Piece.Detective) piece;
+			Optional<Integer> location = board.getDetectiveLocation(detective);
 
-				if (location.isPresent()) {
-					Map<Integer, Integer> distances = djikstra(board, location.get());
-				}
+			if (location.isPresent()) {
+				Map<Integer, Integer> distances = djikstra(board, location.get());
+				distanceToDetective.put(piece,distances);
 			}
+	}
+
+	Move bestMove = null;
+	int bestScore = -1;
+	//finds move that maximises distance from closest detective
+	for (Move move : possibleMoves) {
+
+		int minDistance = Integer.MAX_VALUE;
+
+		int destination = move.accept(new Move.Visitor<>() {
+
+			public Integer visit(Move.SingleMove m) {
+				return m.destination;
+			}
+
+			public Integer visit(Move.DoubleMove m) {
+				return m.destination2;
+			}
+		});
+
+		for (Piece detective : detectives) {
+			int newDistance = distanceToDetective.get(detective).get(destination);
+			minDistance = Math.min(minDistance, newDistance);
 		}
-			var moves = board.getAvailableMoves().asList();
-			return moves.get(new Random().nextInt(moves.size()));
+
+		if (minDistance > bestScore) {
+			bestScore = minDistance;
+			bestMove = move;
 		}
 	}
+
+	if (bestMove == null) {
+		var moves = board.getAvailableMoves().asList();
+		return moves.get(new Random().nextInt(moves.size()));
+	}
+	return bestMove;
+}}
