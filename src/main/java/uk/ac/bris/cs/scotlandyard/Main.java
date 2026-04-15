@@ -10,7 +10,7 @@ import uk.ac.bris.cs.scotlandyard.ui.controller.LocalGameController;
  * Main entry point
  */
 public final class Main {
-	//AI mode
+	//AI mode lol
 	// prevents JPMS related issues
 	public static final class JFXApp extends Application {
 		public LocalGameController controller;
